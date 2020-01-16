@@ -32,4 +32,3 @@ dependencies:
     - tensorflow-metadata==0.14.0
     - tensorflow-probability==0.8.0
     - tensorflow==2.0.0rc0
-    - tf-estimator-nightly==1.14.0
