@@ -18,7 +18,6 @@ seaborn==0.9.0
 setuptools==41.2.0
 six==1.12.0
 statsmodels==0.10.1
-tb-nightly==1.15
 tensorboard==1.14.0
 tensorflow-base==2.0.0
 tensorflow-datasets==1.2.0
