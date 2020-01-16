@@ -35,7 +35,7 @@ def get_filenames(class_labels):
     imgs = []
     for c in class_labels:
         folder_id = c.replace(' ', '_')
-        imgs += glob('download/*%s*/amld_*' % folder_id)
+        imgs += glob('downloads/*%s*/amld_*' % folder_id)
 
     # Return a shuffled list of image filepaths
     return shuffle(imgs)
@@ -58,7 +58,7 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
         arguments = {
             'keywords': label,
             'limit': 100,
-            'output_directory': 'download',
+            'output_directory': 'downloads',
             'image_directory': 'images_{}'.format(folder_id),
             'silent_mode': True,
             'print_urls': False,
@@ -75,7 +75,7 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
         start = time.time()
 
         # Count how many images were already downloaded
-        current_img_count = len(glob(os.path.join('download', 'images_*%s*' % folder_id, '*')))
+        current_img_count = len(glob(os.path.join('downloads', 'images_*%s*' % folder_id, '*')))
         new_img_count = current_img_count
 
         # Only collect images if less than 100 samples are available
@@ -86,10 +86,10 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
                 response.download(arguments)
 
                 # Count new image count
-                new_img_count = len(glob(os.path.join('download', 'images_*%s*' % folder_id, '*')))
+                new_img_count = len(glob(os.path.join('downloads', 'images_*%s*' % folder_id, '*')))
 
         # Verify integrity of image and stored it as RGB images in JPEG format
-        imgs = sorted(glob(os.path.join('download', 'images_*%s*' % folder_id, '*')))
+        imgs = sorted(glob(os.path.join('downloads', 'images_*%s*' % folder_id, '*')))
         
         # Loop through all images and try to open them
         for i, img in enumerate(imgs):
@@ -242,17 +242,17 @@ def remove_outliers(imgs_unique):
     outliers = np.array([detect_outliers(img) for img in imgs_unique])
     
     # Drop outlier images from the list of unique images
-    imgs_cleaned = np.array(imgs_unique)[~outliers].tolist()
+    imgs_clean = np.array(imgs_unique)[~outliers].tolist()
     imgs_outliers = np.array(imgs_unique)[outliers].tolist()
     
     # Report status report
     print('Total number of images in the dataset: {:4}'.format(len(imgs_unique)))
     print('Number of outliers in the dataset: {:8}'.format(len(imgs_outliers)))
     
-    return imgs_cleaned, imgs_outliers
+    return imgs_clean, imgs_outliers
 
 
-def load_dataset(target_size=(64, 64), n_iter=2):
+def load_dataset(target_size=(64, 64), n_iter=1):
     
     transform_args={'rescale': 1/255,
                     'horizontal_flip': True,
@@ -281,7 +281,7 @@ def load_dataset(target_size=(64, 64), n_iter=2):
     return np.array(X), np.array(y), generator
 
 
-def create_dataset(imgs_cleaned, class_labels, img_dim=64, n_iter=2):
+def create_dataset(imgs_clean, class_labels, img_dim=64, n_iter=1):
 
     # Name of parent folder
     parent_folder = 'data'
@@ -297,8 +297,8 @@ def create_dataset(imgs_cleaned, class_labels, img_dim=64, n_iter=2):
         os.makedirs(os.path.join(parent_folder, label_name))
 
         # Extract image label from relative path
-        labels = np.array([os.path.dirname(temp)[16:] for temp in imgs_cleaned])
-        imgs_class = shuffle(np.array(imgs_cleaned)[labels==label_name])
+        labels = np.array([os.path.dirname(temp)[17:] for temp in imgs_clean])
+        imgs_class = shuffle(np.array(imgs_clean)[labels==label_name])
 
         for i, img in enumerate(imgs_class):
             file_ext = os.path.splitext(img)[1]
@@ -395,7 +395,7 @@ def extract_RGB_features(X, y, nbins=128):
     return np.array(X_rgb), y
 
 
-def extract_neural_network_features(n_iter=2):
+def extract_neural_network_features(n_iter=1):
 
     # Create generator object to collect images
     generator = ImageDataGenerator(rescale=1/255).flow_from_directory(
@@ -462,7 +462,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, alpha_low=-4, alpha_high=6, n_steps=30, cv=5):
+def model_fit(X, y, alpha_low=-4, alpha_high=6, n_steps=20, cv=4):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
