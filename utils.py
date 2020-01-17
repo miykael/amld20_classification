@@ -16,7 +16,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 sns.set_context('talk')
-%matplotlib inline
 
 from sklearn.utils import shuffle
 from sklearn.preprocessing import MinMaxScaler
