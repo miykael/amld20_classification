@@ -10,6 +10,7 @@ import requests
 import numpy as np
 import pandas as pd
 from glob import glob
+from tqdm import tqdm_notebook
 from PIL import Image
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -35,7 +36,7 @@ def get_filenames(class_labels):
     imgs = []
     for c in class_labels:
         folder_id = c.replace(' ', '_')
-        imgs += glob('downloads/*%s*/amld_*' % folder_id)
+        imgs += glob('downloads/*%s*/amld_?????.jpg' % folder_id)
 
     # Return a shuffled list of image filepaths
     return shuffle(imgs)
@@ -88,18 +89,30 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
                 # Count new image count
                 new_img_count = len(glob(os.path.join('downloads', 'images_*%s*' % folder_id, '*')))
 
-        # Verify integrity of image and stored it as RGB images in JPEG format
+        # Collect a list of all files, starting with 'amld_' ones
         imgs = sorted(glob(os.path.join('downloads', 'images_*%s*' % folder_id, '*')))
+        imgs_amld = [f for f in imgs if 'amld_' in f]
+        imgs_new = [f for f in imgs if 'amld_' not in f]
+        imgs = imgs_amld + imgs_new
         
+        # Verify integrity of image and stored it as RGB images in JPEG format
         # Loop through all images and try to open them
         for i, img in enumerate(imgs):
             try:
-
                 # Load image and convert to RGB color scheme
                 im = Image.open(img).convert(mode='RGB', colors=256)
 
-                # Extract size of image
-                width, height = im.size
+            except IOError:
+                continue
+
+            # Extract size of image
+            width, height = im.size
+
+            # Define 'amld_' file name
+            filename = os.path.join(os.path.dirname(img), 'amld_%05d.jpg' % (i + 1))
+
+            # If image is not almost squared, resize it, otherwise leave it as it is
+            if np.abs(width-height)>5:
 
                 # Extract min dimension for squaring of image
                 min_dim = min(width, height)
@@ -110,14 +123,19 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
 
                 # Square image
                 im_squared = im.crop((offset_x/2., offset_y/2.,
-                                    offset_x/2. + min_dim, offset_y/2. + min_dim))
+                                        offset_x/2. + min_dim,
+                                        offset_y/2. + min_dim))
 
                 # Save preprocessed and squared image
-                filename = os.path.join(os.path.dirname(img), 'amld_%05d.jpg' % (i + 1))
                 im_squared.save(filename)
 
-            except IOError:
-                continue
+            elif 'amld_' not in img:
+                # Store image file with 'amld_' prefix if it doesn't have it yet
+                im.save(filename)
+
+                # Remove old file
+                if os.path.exists(img):
+                    os.remove(img)
 
     # Return list of images
     imgs = get_filenames(class_labels)
@@ -239,7 +257,10 @@ def detect_outliers(filename, thr_shift=10, thr_unicolor=0.75):
 def remove_outliers(imgs_unique):
     
     # Detect images with a spike in the RGB histogram plots
-    outliers = np.array([detect_outliers(img) for img in imgs_unique])
+    outliers = []
+    for img in tqdm_notebook(imgs_unique):
+        outliers.append(detect_outliers(img))
+    outliers = np.array(outliers)
     
     # Drop outlier images from the list of unique images
     imgs_clean = np.array(imgs_unique)[~outliers].tolist()
@@ -266,11 +287,11 @@ def load_dataset(target_size=(64, 64), n_iter=1):
     
     # Create generator object to collect images
     generator = ImageDataGenerator(**transform_args).flow_from_directory(
-        'data', target_size=target_size, batch_size=128, shuffle=True, seed=0)
+        'data', target_size=target_size, batch_size=32, shuffle=True, seed=0)
     
     # Collect data from folders
     X, y = [], []
-    for batch_i in range(len(generator) * n_iter):
+    for batch_i in tqdm_notebook(range(len(generator) * n_iter)):
         imgs, labels = next(generator)
         X.extend(imgs)
         y.extend(labels.argmax(axis=1))
@@ -316,6 +337,7 @@ def create_dataset(imgs_clean, class_labels, img_dim=64, n_iter=1):
     metainfo['categories'] = generator.class_indices
     metainfo['class_names'] = list(metainfo['categories'])
     metainfo['img_dim'] = img_dim
+    metainfo['filenames'] = np.array(generator.filepaths)[generator.index_array]
 
     return np.array(X), np.array(y), metainfo
 
@@ -324,13 +346,15 @@ def plot_class_distribution(y, metainfo):
 
     # Create dataframe
     df = pd.value_counts(y).sort_index()
+    
+    df = df/df.sum() * 100
     df.index = metainfo['class_names']
 
     # Plot distribution
     plt.figure(figsize=(8, 4))
     df.plot.bar(title='Number of images per class')
-    plt.xlabel('Class Label')
-    plt.ylabel('Number of images')
+    plt.xlabel('Class labels')
+    plt.ylabel('Images per class [%]')
 
 
 def plot_class_average(X, y, metainfo):
@@ -386,7 +410,7 @@ def extract_RGB_features(X, y, nbins=128):
     pixels = X.reshape(len(X), -1, 3)
 
     # Iterate through each image and extract RGB color profile
-    for p in pixels:
+    for p in tqdm_notebook(pixels):
         rgb_profile = np.ravel([np.histogram(p[:, 0], bins=nbins, range=(0, 1), density=True)[0]/nbins,
                                 np.histogram(p[:, 1], bins=nbins, range=(0, 1), density=True)[0]/nbins,
                                 np.histogram(p[:, 2], bins=nbins, range=(0, 1), density=True)[0]/nbins])
@@ -397,20 +421,7 @@ def extract_RGB_features(X, y, nbins=128):
 
 def extract_neural_network_features(n_iter=1):
 
-    # Create generator object to collect images
-    generator = ImageDataGenerator(rescale=1/255).flow_from_directory(
-        'data', target_size=(224, 224), batch_size=128, shuffle=True, seed=0)
-
-    # Collect data from folders
-    X_temp, y_temp = [], []
-    for batch_i in range(len(generator) * n_iter):
-        imgs, labels = next(generator)
-        X_temp.extend(imgs)
-        y_temp.extend(labels.argmax(axis=1))
-    if n_iter >1:
-        print('\tDataset was augmented to a total of N=%d images through means of:' % len(y_temp))
-        print('\tImage rotation, flipping, shifting, zooming and brightness variation.')
-
+    print('Building model.')
     # Extract features using Mobilenet
     module_url = 'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'
 
@@ -420,10 +431,27 @@ def extract_neural_network_features(n_iter=1):
     # Build module
     m.build([None, 224, 224, 3])
 
+    # Create generator object to collect images
+    generator = ImageDataGenerator(rescale=1/255).flow_from_directory(
+        'data', target_size=(224, 224), batch_size=32, shuffle=True, seed=0)
+
+    # Extract features in batches
+    print('Extracting features.')
+
+    # Collect data from folders
+    X_temp, y_temp = [], []
+    for batch_i in tqdm_notebook(range(len(generator) * n_iter)):
+        imgs, labels = next(generator)
+        X_temp.extend(m.predict(imgs))
+        y_temp.extend(labels.argmax(axis=1))
+    if n_iter >1:
+        print('\tDataset was augmented to a total of N=%d images through means of:' % len(y_temp))
+        print('\tImage rotation, flipping, shifting, zooming and brightness variation.')
+
     # Extract features
-    X_nn = m.predict(np.array(X_temp))
+    X_nn = np.array(X_temp)
     y_nn = np.array(y_temp)
-    
+
     return X_nn, y_nn
 
 
@@ -462,16 +490,17 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, alpha_low=-4, alpha_high=6, n_steps=20, cv=4):
+def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=20, cv=4, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
     X_temp = X.reshape((len(X), -1))
     X_temp = scaler.fit_transform(X_temp)
+    indexes = list(range(len(X_temp)))
 
     # Split Dataset into training and test set
-    x_train, x_test, y_train, y_test = train_test_split(
-        X_temp, y, test_size=0.2, random_state=0, stratify=y)
+    x_train, x_test, y_train, y_test, idx_train, idx_test = train_test_split(
+        X_temp, y, indexes, test_size=test_size, random_state=0, stratify=y)
 
     # Model creation
     ridge = RidgeClassifier(class_weight='balanced')
@@ -486,45 +515,58 @@ def model_fit(X, y, alpha_low=-4, alpha_high=6, n_steps=20, cv=4):
         warnings.filterwarnings("ignore")
         results = clf.fit(x_train, y_train)
 
-    # Extract relevant modelling metrics
-    train_scores = 100 * clf.cv_results_['mean_train_score']
-    valid_scores = 100 * clf.cv_results_['mean_test_score']
-    std_tr = 100 * clf.cv_results_['std_train_score']
-    std_va = 100 * clf.cv_results_['std_test_score']
-
     # Plot the model fit curves
-    plt.figure(figsize=(10, 5))
-    plt.semilogx(alphas, train_scores, label='Training Set')
-    plt.semilogx(alphas, valid_scores, label='Validation Set')
+    if plot_figures:
 
-    # Add marker and text for best score
-    x_pos = clf.best_params_['alpha']
-    y_pos = 100 * clf.best_score_
-    txt = '{:0.2f}%'.format(y_pos)
-    plt.scatter(x_pos, y_pos, marker='x', c='red', zorder=10)
-    plt.text(x_pos, y_pos - 7.5, txt, fontdict={'size': 18})
+        # Extract relevant modelling metrics
+        train_scores = 100 * clf.cv_results_['mean_train_score']
+        valid_scores = 100 * clf.cv_results_['mean_test_score']
+        std_tr = 100 * clf.cv_results_['std_train_score']
+        std_va = 100 * clf.cv_results_['std_test_score']
 
-    # Quantify variance with ±std curves
-    plt.fill_between(alphas, train_scores-std_tr, train_scores+std_tr, alpha=0.3)
-    plt.fill_between(alphas, valid_scores-std_va, valid_scores+std_va, alpha=0.3)
-    plt.title('Model Performance')
-    plt.ylabel('Classification Accuracy [%]')
-    plt.xlabel('Model Parameter [alpha]')
-    
-    # Adjust x-lim, y-lim, add legend and adjust layout
-    plt.xlim(10**alpha_low, 10**alpha_high)
-    plt.ylim(15, 105)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-    
+        plt.figure(figsize=(10, 5))
+        plt.semilogx(alphas, train_scores, label='Training Set')
+        plt.semilogx(alphas, valid_scores, label='Validation Set')
+
+        # Add marker and text for best score
+        x_pos = clf.best_params_['alpha']
+        y_pos = 100 * clf.best_score_
+        txt = '{:0.2f}%'.format(y_pos)
+        plt.scatter(x_pos, y_pos, marker='x', c='red', zorder=10)
+        plt.text(x_pos, y_pos - 7.5, txt, fontdict={'size': 18})
+
+        # Quantify variance with ±std curves
+        plt.fill_between(alphas, train_scores-std_tr, train_scores+std_tr, alpha=0.3)
+        plt.fill_between(alphas, valid_scores-std_va, valid_scores+std_va, alpha=0.3)
+        plt.title('Model Performance')
+        plt.ylabel('Classification Accuracy [%]')
+        plt.xlabel('Model Parameter [alpha]')
+        
+        # Adjust x-lim, y-lim, add legend and adjust layout
+        plt.xlim(10**alpha_low, 10**alpha_high)
+        plt.ylim(15, 105)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    else:
+        # Provide written performance feedback
+        comp_time_total = clf.cv_results_['mean_fit_time'].sum()
+        best_score_test = clf.best_score_ * 100
+        feedback_txt = 'Model trained for {:.2f}s total '.format(comp_time_total)
+        feedback_txt += 'and reached an accuracy of: {:.2f}%'.format(best_score_test)
+        time.sleep(0.25)
+        print(feedback_txt)
+
     # Store everything in model
     model = {'model': results.best_estimator_,
              'best_score': results.best_score_,
              'x_train': x_train,
              'x_test': x_test,
              'y_train': y_train,
-             'y_test': y_test}
+             'y_test': y_test,
+             'idx_train': idx_train,
+             'idx_test': idx_test}
 
     return model
 
@@ -541,6 +583,7 @@ def check_model_performance(model, metainfo):
                           model['y_test'],
                           display_labels=metainfo['class_names'],
                           cmap='Blues', normalize=None,
+                          values_format='d',
                           xticks_rotation='vertical', ax=ax)
 
     # Remove colorbar
@@ -567,13 +610,6 @@ def check_model_performance(model, metainfo):
             verticalalignment='top', bbox=props, family='monospace')
 
 
-def print_class_labels(metainfo):
-    df = pd.DataFrame([range(1, metainfo['n_classes'] + 1), metainfo['class_names']]).T
-    df.columns = ['ID', 'Classes']
-    df.set_index('ID', inplace=True)
-    return df
-
-
 def get_predictions(model):
 
     # Establish y_pred and y_true
@@ -595,7 +631,7 @@ def get_predictions(model):
     return prob, id_correct, id_wrong
 
 
-def investigate_predictions(model, metainfo, show_correct=True, imgs=None, nimg=5):
+def investigate_predictions(model, metainfo, show_correct=True, nimg=5):
 
     # Compute class probabilities
     prob, id_correct, id_wrong = get_predictions(model)
@@ -606,6 +642,10 @@ def investigate_predictions(model, metainfo, show_correct=True, imgs=None, nimg=
         img_ids = id_wrong
     img_ids = shuffle(img_ids)
 
+    # Establish filename list
+    filenames = np.array(metainfo['filenames'])
+    filenames_test = filenames[np.array(model['idx_test'])]
+    
     # Plot first N image prediction information
     fig = plt.figure(figsize=(nimg*3, 4.5))
     gs = gridspec.GridSpec(2, nimg, height_ratios=[1, 4]) 
@@ -613,9 +653,7 @@ def investigate_predictions(model, metainfo, show_correct=True, imgs=None, nimg=
     for i_pos, idx in enumerate(img_ids[:nimg]):
 
         # Get image
-        img = imgs['x_test'][idx]
-        img_dim = int(np.sqrt(len(img)/3))
-        img = img.reshape(img_dim, img_dim, 3)
+        img = imageio.imread(filenames_test[idx])
 
         # Get probability
         probability = prob[idx]
