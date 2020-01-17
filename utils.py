@@ -490,7 +490,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=20, cv=4, plot_figures=False):
+def model_fit(X, y, test_size=0.5, alpha_low=-3, alpha_high=5, n_steps=16, cv=2, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -513,7 +513,9 @@ def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=20, cv=4,
     # Fit the model to the data
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
+        start = time.time()
         results = clf.fit(x_train, y_train)
+        comp_time_total = time.time() - start
 
     # Plot the model fit curves
     if plot_figures:
@@ -551,7 +553,6 @@ def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=20, cv=4,
 
     else:
         # Provide written performance feedback
-        comp_time_total = clf.cv_results_['mean_fit_time'].sum()
         best_score_test = clf.best_score_ * 100
         feedback_txt = 'Model trained for {:.2f}s total '.format(comp_time_total)
         feedback_txt += 'and reached an accuracy of: {:.2f}%'.format(best_score_test)
