@@ -16,5 +16,5 @@ dependencies:
   - tqdm
   - pip:
     - google-images-download
-    - tensorflow
+    - tensorflow==2.1
     - tensorflow-hub

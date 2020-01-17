@@ -15,6 +15,8 @@ from PIL import Image
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+sns.set_context('talk')
+%matplotlib inline
 
 from sklearn.utils import shuffle
 from sklearn.preprocessing import MinMaxScaler
@@ -23,11 +25,16 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import plot_confusion_matrix
 
+from google_images_download import google_images_download
+
+# Handle tensorflow imports
+if 'google.colab' in sys.modules:
+    %tensorflow_version 2.x
+
 import tensorflow as tf
 import tensorflow_hub as hub
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-from google_images_download import google_images_download
 
 
 def get_filenames(class_labels):
