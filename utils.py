@@ -26,10 +26,6 @@ from sklearn.metrics import plot_confusion_matrix
 
 from google_images_download import google_images_download
 
-# Handle tensorflow imports
-if 'google.colab' in sys.modules:
-    %tensorflow_version 2.x
-
 import tensorflow as tf
 import tensorflow_hub as hub
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
