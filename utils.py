@@ -31,7 +31,6 @@ import tensorflow_hub as hub
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
-
 def get_filenames(class_labels):
     
     # Create list of filepaths
@@ -492,7 +491,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.5, alpha_low=-3, alpha_high=5, n_steps=16, cv=2, plot_figures=False):
+def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=20, cv=5, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
