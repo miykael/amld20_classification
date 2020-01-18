@@ -10,7 +10,7 @@ import requests
 import numpy as np
 import pandas as pd
 from glob import glob
-from tqdm import tqdm_notebook
+from tqdm.notebook import tqdm
 from PIL import Image
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -259,7 +259,7 @@ def remove_outliers(imgs_unique):
     
     # Detect images with a spike in the RGB histogram plots
     outliers = []
-    for img in tqdm_notebook(imgs_unique):
+    for img in tqdm(imgs_unique):
         outliers.append(detect_outliers(img))
     outliers = np.array(outliers)
     
@@ -275,7 +275,7 @@ def remove_outliers(imgs_unique):
 
 
 def load_dataset(target_size=(64, 64), n_iter=3):
-    
+
     transform_args={'rescale': 1/255,
                     'horizontal_flip': True,
                     'rotation_range': 22.5,
@@ -288,12 +288,12 @@ def load_dataset(target_size=(64, 64), n_iter=3):
     
     # Create generator object to collect images
     generator = ImageDataGenerator(**transform_args).flow_from_directory(
-        'data', target_size=target_size, batch_size=32, shuffle=False, seed=0)
+        'data', target_size=target_size, batch_size=32, shuffle=True, seed=0)
     
     # Collect data from folders
     X, y = [], []
-    for batch_i in tqdm_notebook(range(len(generator) * n_iter)):
-        imgs, labels = next(generator)
+    for batch_i in tqdm(range(len(generator) * n_iter)):
+        imgs, labels = generator.next()
         X.extend(imgs)
         y.extend(labels.argmax(axis=1))
     if n_iter >1:
@@ -301,10 +301,10 @@ def load_dataset(target_size=(64, 64), n_iter=3):
         print('Image rotation, flipping, shifting, zooming and brightness variation.\n')
 
     # Shuffle images
-    idx_new = shuffle(range(len(X)))
-    X = np.array(X)[idx_new]
-    y = np.array(y)[idx_new]
-    generator.idx_new = idx_new
+    X = np.array(X)
+    y = np.array(y)
+    filenames = list(np.array(generator.filepaths)[generator.index_array])
+    generator.file_paths = filenames * n_iter
 
     return X, y, generator
 
@@ -344,9 +344,7 @@ def create_dataset(imgs_clean, class_labels, img_dim=64, n_iter=3):
     metainfo['categories'] = generator.class_indices
     metainfo['class_names'] = list(metainfo['categories'])
     metainfo['img_dim'] = img_dim
-    metainfo['filenames'] = np.array(generator.filepaths)[generator.index_array]
-    metainfo['filenames'] = np.repeat(metainfo['filenames'], n_iter)
-    metainfo['idx_new'] = np.array(generator.idx_new)
+    metainfo['filenames'] = np.array(generator.file_paths)
 
     return np.array(X), np.array(y), metainfo
 
@@ -419,7 +417,7 @@ def extract_RGB_features(X, y, nbins=128):
     pixels = X.reshape(len(X), -1, 3)
 
     # Iterate through each image and extract RGB color profile
-    for p in tqdm_notebook(pixels):
+    for p in tqdm(pixels):
         rgb_profile = np.ravel([np.histogram(p[:, 0], bins=nbins, range=(0, 1), density=True)[0]/nbins,
                                 np.histogram(p[:, 1], bins=nbins, range=(0, 1), density=True)[0]/nbins,
                                 np.histogram(p[:, 2], bins=nbins, range=(0, 1), density=True)[0]/nbins])
@@ -449,8 +447,8 @@ def extract_neural_network_features(n_iter=3):
 
     # Collect data from folders
     X_temp, y_temp = [], []
-    for batch_i in tqdm_notebook(range(len(generator) * n_iter)):
-        imgs, labels = next(generator)
+    for batch_i in tqdm(range(len(generator) * n_iter)):
+        imgs, labels = generator.next()
         X_temp.extend(m.predict(imgs))
         y_temp.extend(labels.argmax(axis=1))
     if n_iter >1:
@@ -499,7 +497,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6, n_steps=25, cv=4, plot_figures=False):
+def model_fit(X, y, test_size=0.25, alpha_low=-4, alpha_high=6, n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -653,7 +651,7 @@ def investigate_predictions(model, metainfo, show_correct=True, nimg=5):
     img_ids = shuffle(img_ids)
 
     # Establish filename list
-    filenames = np.array(metainfo['filenames'])
+    filenames = metainfo['filenames']
     filenames_test = filenames[np.array(model['idx_test'])]
     
     # Plot first N image prediction information
