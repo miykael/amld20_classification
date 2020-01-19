@@ -274,7 +274,7 @@ def remove_outliers(imgs_unique):
     return imgs_clean, imgs_outliers
 
 
-def load_dataset(target_size=(64, 64), n_iter=3):
+def load_dataset(target_size=(64, 64), n_iter=2):
 
     transform_args={'rescale': 1/255,
                     'horizontal_flip': True,
@@ -314,7 +314,7 @@ def load_dataset(target_size=(64, 64), n_iter=3):
     return X, y, generator
 
 
-def create_dataset(imgs_clean, class_labels, img_dim=64, n_iter=3):
+def create_dataset(imgs_clean, class_labels, img_dim=32, n_iter=2):
 
     # Name of parent folder
     parent_folder = 'data'
@@ -432,7 +432,7 @@ def extract_RGB_features(X, y, nbins=256):
     return np.array(X_rgb), y
 
 
-def extract_neural_network_features(n_iter=3):
+def extract_neural_network_features(n_iter=2):
 
     print('Building model.')
     # Extract features using Mobilenet
@@ -509,7 +509,8 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.20, alpha_low=-4, alpha_high=6, n_steps=25, cv=4, plot_figures=False):
+def model_fit(X, y, test_size=0.25, alpha_low=-4, alpha_high=6,
+              n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -651,7 +652,7 @@ def get_predictions(model):
     return prob, id_correct, id_wrong
 
 
-def investigate_predictions(model, metainfo, show_correct=True, nimg=5):
+def investigate_predictions(model, metainfo, show_correct=True, nimg=6):
 
     # Compute class probabilities
     prob, id_correct, id_wrong = get_predictions(model)
