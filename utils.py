@@ -291,11 +291,14 @@ def load_dataset(target_size=(64, 64), n_iter=3):
         'data', target_size=target_size, batch_size=32, shuffle=True, seed=0)
     
     # Collect data from folders
-    X, y = [], []
+    X, y, indeces = [], [], []
+    n_elements = len(generator)
     for batch_i in tqdm(range(len(generator) * n_iter)):
         imgs, labels = generator.next()
         X.extend(imgs)
         y.extend(labels.argmax(axis=1))
+        if batch_i % n_elements == 0:
+            indeces.extend(generator.index_array)
     if n_iter >1:
         print('\nDataset was augmented to a total of N=%d images through means of:' % len(y))
         print('Image rotation, flipping, shifting, zooming and brightness variation.\n')
@@ -303,8 +306,10 @@ def load_dataset(target_size=(64, 64), n_iter=3):
     # Shuffle images
     X = np.array(X)
     y = np.array(y)
-    filenames = list(np.array(generator.filepaths)[generator.index_array])
-    generator.file_paths = filenames * n_iter
+    indeces = np.array(indeces)
+    generator.indeces = indeces
+    filenames = np.array(generator.filepaths)[indeces]
+    generator.file_paths = filenames
 
     return X, y, generator
 
@@ -345,6 +350,7 @@ def create_dataset(imgs_clean, class_labels, img_dim=64, n_iter=3):
     metainfo['class_names'] = list(metainfo['categories'])
     metainfo['img_dim'] = img_dim
     metainfo['filenames'] = np.array(generator.file_paths)
+    metainfo['indeces'] = np.array(generator.indeces)
 
     return np.array(X), np.array(y), metainfo
 
@@ -408,7 +414,7 @@ def plot_class_RGB(X, y, metainfo):
     plt.show()
 
 
-def extract_RGB_features(X, y, nbins=128):
+def extract_RGB_features(X, y, nbins=256):
 
     # Create place holder variable to fill up
     X_rgb = []
@@ -446,11 +452,15 @@ def extract_neural_network_features(n_iter=3):
     print('Extracting features.')
 
     # Collect data from folders
-    X_temp, y_temp = [], []
+    X_temp, y_temp, indeces_temp = [], [], []
+    n_elements = len(generator)
     for batch_i in tqdm(range(len(generator) * n_iter)):
         imgs, labels = generator.next()
         X_temp.extend(m.predict(imgs))
         y_temp.extend(labels.argmax(axis=1))
+        if batch_i % n_elements == 0:
+            indeces_temp.extend(generator.index_array)
+
     if n_iter >1:
         print('Dataset was augmented to a total of N=%d images through means of:' % len(y_temp))
         print('Image rotation, flipping, shifting, zooming and brightness variation.\n')
@@ -458,6 +468,8 @@ def extract_neural_network_features(n_iter=3):
     # Extract features
     X_nn = np.array(X_temp)
     y_nn = np.array(y_temp)
+    indeces_nn = np.array(indeces_temp)
+    filenames = np.array(generator.filepaths)[indeces_nn]
 
     return X_nn, y_nn
 
@@ -497,7 +509,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.25, alpha_low=-4, alpha_high=6, n_steps=25, cv=4, plot_figures=False):
+def model_fit(X, y, test_size=0.20, alpha_low=-4, alpha_high=6, n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
     scaler = MinMaxScaler(feature_range=(0, 1))
