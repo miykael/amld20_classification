@@ -13,7 +13,7 @@ dependencies:
   - scikit-learn=0.22
   - scipy=1.4
   - seaborn=0.9
-  - tqdm=4
+  - tqdm=4.41
   - pip:
     - google-images-download==2.8
     - tensorflow==2.1
