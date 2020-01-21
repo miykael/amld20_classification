@@ -216,7 +216,7 @@ def remove_duplicates(imgs):
     return imgs_unique
 
 
-def detect_outliers(filename, thr_shift=10, thr_unicolor=0.75):
+def detect_outliers(filename, thr_shift=20, thr_unicolor=0.80):
 
     # Load image from filename
     img = imageio.imread(filename).reshape(-1, 3)
@@ -414,19 +414,20 @@ def plot_class_RGB(X, y, metainfo):
     plt.show()
 
 
-def extract_RGB_features(X, y, nbins=256):
+def extract_RGB_features(y, metainfo, nbins=256):
+
+    # Get list of file names
+    filenames = metainfo['filenames']
 
     # Create place holder variable to fill up
     X_rgb = []
 
-    # Reshape input images to flat pixel arrays
-    pixels = X.reshape(len(X), -1, 3)
-
     # Iterate through each image and extract RGB color profile
-    for p in tqdm(pixels):
-        rgb_profile = np.ravel([np.histogram(p[:, 0], bins=nbins, range=(0, 1), density=True)[0]/nbins,
-                                np.histogram(p[:, 1], bins=nbins, range=(0, 1), density=True)[0]/nbins,
-                                np.histogram(p[:, 2], bins=nbins, range=(0, 1), density=True)[0]/nbins])
+    for img in tqdm(filenames):
+        pixels = imageio.imread(img) / 255
+        rgb_profile = np.ravel([np.histogram(pixels[:, 0], bins=nbins, range=(0, 1), density=True)[0]/nbins,
+                                np.histogram(pixels[:, 1], bins=nbins, range=(0, 1), density=True)[0]/nbins,
+                                np.histogram(pixels[:, 2], bins=nbins, range=(0, 1), density=True)[0]/nbins])
         X_rgb.append(rgb_profile)
 
     return np.array(X_rgb), y
@@ -509,7 +510,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.33, alpha_low=-4, alpha_high=6,
+def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6,
               n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
@@ -652,7 +653,7 @@ def get_predictions(model):
     return prob, id_correct, id_wrong
 
 
-def investigate_predictions(model, metainfo, show_correct=True, nimg=6):
+def investigate_predictions(model, metainfo, show_correct=True, nimg=8):
 
     # Compute class probabilities
     prob, id_correct, id_wrong = get_predictions(model)
@@ -707,7 +708,7 @@ def investigate_predictions(model, metainfo, show_correct=True, nimg=6):
         plt.xlim(xlim)
         plt.xticks([])
         plt.yticks([])
-        plt.title('Prediction Probability')
+        plt.title('Class Probability')
 
         # Plot image
         ax = plt.subplot(gs[1, i_pos])
