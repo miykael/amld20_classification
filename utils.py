@@ -509,7 +509,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.25, alpha_low=-4, alpha_high=6,
+def model_fit(X, y, test_size=0.33, alpha_low=-4, alpha_high=6,
               n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
