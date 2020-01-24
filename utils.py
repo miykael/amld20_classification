@@ -146,6 +146,9 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
 
 def plot_images(imgs, n_col=6, n_row=3, show_histogram=False):
 
+    # Reshuffle image order for every call
+    imgs = shuffle(imgs)
+
     # Plot images without histogram
     if not show_histogram:
 
@@ -272,7 +275,7 @@ def remove_outliers(imgs_unique):
     return imgs_clean, imgs_outliers
 
 
-def load_dataset(target_size=(64, 64), n_iter=2):
+def load_dataset(target_size=(64, 64), n_iter=3):
 
     transform_args={'rescale': 1/255,
                     'horizontal_flip': True,
@@ -312,7 +315,7 @@ def load_dataset(target_size=(64, 64), n_iter=2):
     return X, y, generator
 
 
-def create_dataset(imgs_clean, class_labels, img_dim=32, n_iter=2):
+def create_dataset(imgs_clean, class_labels, img_dim=32, n_iter=3):
 
     # Name of parent folder
     parent_folder = 'data'
@@ -431,7 +434,7 @@ def extract_RGB_features(y, metainfo, nbins=256):
     return np.array(X_rgb), y
 
 
-def extract_neural_network_features(n_iter=2):
+def extract_neural_network_features(n_iter=3):
 
     print('Building model.')
     # Extract features using Mobilenet
