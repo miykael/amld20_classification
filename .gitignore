@@ -1,6 +1,6 @@
-.DS_Store
-__pycache__
-.ipynb_checkpoints
-*.pptx
 temp_img.jpg
 data
+__pycache__
+**/.ipynb_checkpoints
+**/.DS_Store
+*.pptx

@@ -3,18 +3,18 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - imageio=2.6
-  - jupyterlab=1.2
-  - matplotlib=3.1.2
-  - numpy=1.17
-  - pandas=0.25
+  - imageio
+  - jupyterlab
+  - matplotlib
+  - numpy
+  - pandas
   - pip=19
   - python=3.6
-  - scikit-learn=0.22
-  - scipy=1.4
-  - seaborn=0.9
-  - tqdm=4.41
+  - scikit-learn>=0.22
+  - scipy
+  - seaborn
+  - tqdm>=4.38
   - pip:
-    - google-images-download==2.8
+    - google-images-download
     - tensorflow==2.1
-    - tensorflow-hub==0.7
+    - tensorflow-hub
