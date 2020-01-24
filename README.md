@@ -1,6 +1,6 @@
-# AMLD20 - Image Classification
+<img src="static/EXTS_Logo.png" width="125px" align="right">
 
-<img href="https://www.extensionschool.ch/" src="static/EXTS_Logo.png" width="125px" align="right">
+# AMLD20 - Image Classification
 
 Welcome! This repository contains all resources for the **Image Classification** hands-on exercise, presented during the [EPFL Extension School Workshop - Machine Learning and Data Visualization](https://appliedmldays.org/workshops/epfl-extension-school-workshop-machine-learning-and-data-visualization) at the [Applied Machine Learning Days 2020](https://appliedmldays.org/).
 
@@ -8,8 +8,6 @@ Welcome! This repository contains all resources for the **Image Classification**
 ## Content
 
 In this hands-on exercise, participant are tasked to train their own image classifier. The goal of this hands-on exercise is to provide a general overview about the topic of image classifiation, and to showcase in a practical way the moving parts of this so called machine learning "black box". At the end, the participants will be able to train their own image classification model, trained on their own chosen classes, and to predict the most likely class membership of any new image.
-
-## Slides
 
 The Google slides connected to this talk can be found [here](https://docs.google.com/presentation/d/1Jg9rO_3dXwKzJyDOr2ley8Is5oWKE6D_aJJlJrpw0mw).
 
