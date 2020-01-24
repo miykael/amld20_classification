@@ -11,7 +11,7 @@ In this hands-on exercise, participant are tasked to train their own image class
 
 The Google slides connected to this talk can be found [here](https://docs.google.com/presentation/d/1Jg9rO_3dXwKzJyDOr2ley8Is5oWKE6D_aJJlJrpw0mw).
 
-## Run Hands-On in the Cloud
+### Run Hands-On in the Cloud
 
 The most straightforward way to run this hands-on exercise is to execute it directly in your browser, i.e. in the cloud.
 
@@ -24,7 +24,7 @@ Given the computational demands of this hands-on exercise, we recommend to run i
 
 Should you prefer to run the hands-on locally on your machine, either install [Miniconda](https://docs.conda.io/en/latest/miniconda.html) on your system and use the provided [environment.yml](https://github.com/miykael/amld20_classification/blob/master/environment.yml) file, or use your python environment of chose and use the [colab-requirements.txt](https://github.com/miykael/amld20_classification/blob/master/colab-requirements.txt) file to install the required Python dependencies with `pip`.
 
-### Clone repository content from Github
+#### 1. Clone repository content from Github
 
 First things first, download the content of the github repository either manually via the green [Clone or download](https://github.com/miykael/amld20_classification/) button on the top right of the homepage, or use a terminal and run the code:
 
@@ -34,7 +34,7 @@ git clone https://github.com/miykael/amld20_classification.git
 
 Once the content of the repository is on your machine, you can install the relevant Python dependencies with `conda` or `pip`.
 
-#### Installation with conda
+#### 2a. Installation with conda
 
 To install the relevant Python dependencies with conda, use the following code. ***Note***: This assumes that the downloaded github repository was stored in your home folder.
 
@@ -42,7 +42,7 @@ To install the relevant Python dependencies with conda, use the following code. 
 conda env create -f ~/amld20_classification/environment.yml
 ```
 
-#### Installation with `pip`
+#### 2b. Installation with `pip`
 
 To install the relevant Python dependencies with `pip`, use the following code. ***Note***: This assumes that the downloaded github repository was stored in your home folder.
 
