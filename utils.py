@@ -139,7 +139,7 @@ def collect_images(class_labels, suffix='photo,close up,portrait'):
     # Return list of images
     imgs = get_filenames(class_labels)
 
-    # Collection Feedback
+    # Collection Feedback
     print('---\nA Total of N=%d images were collected!' % len(imgs))
     return imgs
 
@@ -207,7 +207,7 @@ def remove_duplicates(imgs):
     # List of unique images
     imgs_unique = np.array(imgs)[~mask].tolist()
 
-    # Number of duplicates
+    # Number of duplicates
     n_duplicates = len(imgs) - len(imgs_unique)
 
     # Report status report
@@ -258,7 +258,7 @@ def detect_outliers(filename, thr_shift=20, thr_unicolor=0.80):
 
 def remove_outliers(imgs_unique):
     
-    # Detect images with a spike in the RGB histogram plots
+    # Detect images with a spike in the RGB histogram plots
     outliers = []
     for img in tqdm(imgs_unique):
         outliers.append(detect_outliers(img))
@@ -275,7 +275,7 @@ def remove_outliers(imgs_unique):
     return imgs_clean, imgs_outliers
 
 
-def load_dataset(target_size=(64, 64), n_iter=3):
+def load_dataset(target_size=(64, 64), n_iter=2):
 
     transform_args={'rescale': 1/255,
                     'horizontal_flip': True,
@@ -315,7 +315,7 @@ def load_dataset(target_size=(64, 64), n_iter=3):
     return X, y, generator
 
 
-def create_dataset(imgs_clean, class_labels, img_dim=32, n_iter=3):
+def create_dataset(imgs_clean, class_labels, img_dim=32, n_iter=2):
 
     # Name of parent folder
     parent_folder = 'data'
@@ -417,13 +417,13 @@ def plot_class_RGB(X, y, metainfo):
 
 def extract_RGB_features(y, metainfo, nbins=256):
 
-    # Get list of file names
+    # Get list of file names
     filenames = metainfo['filenames']
 
     # Create place holder variable to fill up
     X_rgb = []
 
-    # Iterate through each image and extract RGB color profile
+    # Iterate through each image and extract RGB color profile
     for img in tqdm(filenames):
         pixels = imageio.imread(img) / 255
         rgb_profile = np.ravel([np.histogram(pixels[:, 0], bins=nbins, range=(0, 1), density=True)[0]/nbins,
@@ -434,7 +434,7 @@ def extract_RGB_features(y, metainfo, nbins=256):
     return np.array(X_rgb), y
 
 
-def extract_neural_network_features(n_iter=3):
+def extract_neural_network_features(n_iter=2):
 
     print('Building model.')
     # Extract features using Mobilenet
@@ -447,7 +447,19 @@ def extract_neural_network_features(n_iter=3):
     m.build([None, 224, 224, 3])
 
     # Create generator object to collect images
-    generator = ImageDataGenerator(rescale=1/255).flow_from_directory(
+
+    transform_args={'rescale': 1/255,
+                    'horizontal_flip': True,
+                    'rotation_range': 22.5,
+                    'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'brightness_range': (0.9, 1.1),
+                    'zoom_range': (0.95, 1.05),
+                    'fill_mode': 'reflect',
+                    }
+
+    # Create generator object to collect images
+    generator = ImageDataGenerator(**transform_args).flow_from_directory(
         'data', target_size=(224, 224), batch_size=32, shuffle=True, seed=0)
 
     # Extract features in batches
@@ -467,7 +479,7 @@ def extract_neural_network_features(n_iter=3):
         print('Dataset was augmented to a total of N=%d images through means of:' % len(y_temp))
         print('Image rotation, flipping, shifting, zooming and brightness variation.\n')
 
-    # Extract features
+    # Extract features
     X_nn = np.array(X_temp)
     y_nn = np.array(y_temp)
     indeces_nn = np.array(indeces_temp)
@@ -511,7 +523,7 @@ def plot_recap(X, X_rgb, X_nn):
     plt.show()
 
 
-def model_fit(X, y, test_size=0.5, alpha_low=-4, alpha_high=6,
+def model_fit(X, y, test_size=0.5, alpha_low=-6, alpha_high=6,
               n_steps=25, cv=4, plot_figures=False):
 
     # Prepare datasets
@@ -627,7 +639,7 @@ def check_model_performance(model, metainfo):
     # Plot title for report
     #ax.text(-18, -1.1, 'Classification Report', fontsize=19, verticalalignment='top')
 
-    # Plot report in text box
+    # Plot report in text box
     props = dict(boxstyle='round', facecolor='blue', alpha=0.1)
     ax.text(-2.16, 0.95, report, transform=ax.transAxes, fontsize=18,
             verticalalignment='top', bbox=props, family='monospace')
@@ -727,7 +739,7 @@ def investigate_predictions(model, metainfo, show_correct=True, nimg=8):
 
 def predict_new_image(img_url, model_nn, metainfo):
 
-    # Download the image
+    # Download the image
     print('Downloading image.')
     response = requests.get(img_url, stream=True)
     with open('temp_img.jpg', 'wb') as out_file:
