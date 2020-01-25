@@ -12,8 +12,6 @@ The Google slides connected to this talk can be found [here](https://docs.google
 
 The most straightforward way to run this hands-on exercise is to execute it directly in your browser, i.e. in the cloud.
 
-github.com/epfl-exts/amdl20-image-classification
-
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/epfl-exts/amdl20-image-classification) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/epfl-exts/amdl20-image-classification/master?filepath=AMLD20_image_classification.ipynb)
 [![Generic badge](https://img.shields.io/badge/Offline_View-Open-Blue.svg)](https://nbviewer.jupyter.org/github/epfl-exts/amdl20-image-classification/blob/master/static/AMLD20_image_classification.ipynb)
 
