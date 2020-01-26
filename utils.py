@@ -1,3 +1,12 @@
+# Author: Michael Notter, January 2020
+#
+# Support script used for the Image Classification hands-on exercise presented
+# during the EPFL Extension School Workshop - Machine Learning, at the Applied
+# Machine Learning Days 2020, Lausanne, Switzerland. (See: https://appliedmldays.org/workshops/epfl-extension-school-workshop-machine-learning-and-data-visualization)
+#
+# For more information about this hands-on exercise, and the full code base,
+# see: https://github.com/epfl-exts/amdl20-image-classification
+
 import os
 import time
 import shutil
