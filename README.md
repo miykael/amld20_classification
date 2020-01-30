@@ -36,7 +36,7 @@ Once the content of the repository is on your machine, you can install the relev
 To install the relevant Python dependencies with conda, use the following code. ***Note***: This assumes that the downloaded github repository was stored in your home folder.
 
 ```
-conda env create -f ~/amdl20-image-classification/environment.yml
+conda env create -f ~/amld20_classification/environment.yml
 ```
 
 #### 2b. Installation with `pip`
@@ -44,5 +44,5 @@ conda env create -f ~/amdl20-image-classification/environment.yml
 To install the relevant Python dependencies with `pip`, use the following code. ***Note***: This assumes that the downloaded github repository was stored in your home folder.
 
 ```
-pip install -r ~/amdl20-image-classification/colab-requirements.txt
+pip install -r ~/amld20_classification/colab-requirements.txt
 ```
